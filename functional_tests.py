@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 import unittest
 
 
@@ -18,17 +19,32 @@ class NewVisitorTest(unittest.TestCase):
 
         # He noticed the page title and header mention to-do list
         self.assertIn('To-Do', self.browser.title)
-        self.fail('Finish the test!')
+        header_text = self.browser.find_element_by_tag_name('h1').text
+        self.assertIn('To-Do', header_text)
 
         # He is invited to enter a to-do item straight away
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        self.assertEqual(
+            inputbox.get_attribute('placeholder'),
+            'Enter a to-do item'
+        )
 
         # He types "Buy tickets to Stockholm" into a text box.
+        inputbox.send_keys('Buy tickets to Stockholm')
 
         # When he hits Enter, the page updates and now the list shows:
         # "1. Buy tickets to Stockholm" as an item on to-do list
+        inputbox.send_keys(Keys.ENTER)
+
+        table = self.browser.find_element_by_id('id_list_table')
+        rows = table.find_elements_by_tag_name('tr')
+        self.assertTrue(
+            any(row.text == 'Buy tickets to Stockholm' for row in rows)
+        )
 
         # There still is a text box inviting him to add another item.
         # He types "Book a hotel for upcoming trip to Sweden".
+        self.fail('Finish the test!')
 
         # The page updates and now he sees both items on his list.
 
