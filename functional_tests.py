@@ -15,7 +15,7 @@ class NewVisitorTest(unittest.TestCase):
     def check_for_row_in_list_table(self, row_text):
         table = self.browser.find_element_by_id('id_list_table')
         rows = table.find_elements_by_tag_name('tr')
-        self.assertIn(row_text, [row.text for row in rows])
+        self.assertIn(row_text, ' '.join(row.text for row in rows))
 
     def test_can_start_a_list_and_retrieve_it_later(self):
         # Peter is going to check out our to-do app.
@@ -41,7 +41,7 @@ class NewVisitorTest(unittest.TestCase):
         # "1. Buy tickets to Stockholm" as an item on to-do list
         inputbox.send_keys(Keys.ENTER)
 
-        self.check_for_row_in_list_table('1. Buy tickets to Stockholm')
+        self.check_for_row_in_list_table('Buy tickets to Stockholm')
 
         # There still is a text box inviting him to add another item.
         # He types "Book a hotel for upcoming trip to Sweden".
@@ -50,8 +50,8 @@ class NewVisitorTest(unittest.TestCase):
         inputbox.send_keys(Keys.ENTER)
 
         # The page updates and now he sees both items on his list.
-        self.check_for_row_in_list_table('1. Buy tickets to Stockholm')
-        self.check_for_row_in_list_table('2. Book a hotel for upcoming trip to Sweden')
+        self.check_for_row_in_list_table('1: Buy tickets to Stockholm')
+        self.check_for_row_in_list_table('2: Book a hotel for upcoming trip to Sweden')
 
         # Peter wonders whether the site will remember his list. Then he
         # sees that the site generated a unique URL for him - there is
