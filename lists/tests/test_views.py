@@ -56,34 +56,6 @@ class NewListTest(TestCase):
         self.assertEqual(Item.objects.count(), 0)
 
 
-class NewItemTest(TestCase):
-
-    def test_can_save_a_POST_to_an_existing_list(self):
-        other_list = List.objects.create()
-        correct_list = List.objects.create()
-
-        self.client.post(
-            '/lists/{}/add_item'.format(correct_list.id),
-            data={'item_text': 'New Item for Existing List'}
-        )
-
-        self.assertEqual(Item.objects.count(), 1)
-        new_item = Item.objects.first()
-        self.assertEqual(new_item.text, 'New Item for Existing List')
-        self.assertEqual(new_item.list, correct_list)
-
-    def test_redirects_to_list_view(self):
-        List.objects.create()
-        correct_list = List.objects.create()
-
-        response = self.client.post(
-            '/lists/{}/add_item'.format(correct_list.id),
-            data={'item_text': 'New Item for Existing List'}
-        )
-
-        self.assertRedirects(response, '/lists/{}/'.format(correct_list.id))
-
-
 class ListViewTest(TestCase):
 
     def test_uses_list_template(self):
@@ -111,4 +83,30 @@ class ListViewTest(TestCase):
         self.assertContains(response, 'Second but important')
         self.assertNotContains(response, 'Foo')
         self.assertNotContains(response, 'Bar')
+
+    def test_can_save_a_POST_to_an_existing_list(self):
+        other_list = List.objects.create()
+        correct_list = List.objects.create()
+
+        self.client.post(
+            '/lists/{}/'.format(correct_list.id),
+            data={'item_text': 'New Item for Existing List'}
+        )
+
+        self.assertEqual(Item.objects.count(), 1)
+        new_item = Item.objects.first()
+        self.assertEqual(new_item.text, 'New Item for Existing List')
+        self.assertEqual(new_item.list, correct_list)
+
+    def test_POST_redirects_to_list_view(self):
+        List.objects.create()
+        correct_list = List.objects.create()
+
+        response = self.client.post(
+            '/lists/{}/'.format(correct_list.id),
+            data={'item_text': 'New Item for Existing List'}
+        )
+
+        self.assertRedirects(response, '/lists/{}/'.format(correct_list.id))
+
 
