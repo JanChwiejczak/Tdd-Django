@@ -1,11 +1,7 @@
-from django.core.urlresolvers import resolve
-from django.template.loader import render_to_string
-from django.http import HttpRequest
 from django.utils.html import escape
 import pytest
 
 from lists.models import Item, List
-from lists.views import home_page
 from lists.forms import ItemForm
 
 
@@ -26,7 +22,7 @@ class TestNewList:
     def test_saving_a_POST_request(self, client):
         client.post(
             '/lists/new',
-            data={'item_text': 'A new list item'}
+            data={'text': 'A new list item'}
         )
         assert Item.objects.count() == 1
         new_item = Item.objects.first()
@@ -35,7 +31,7 @@ class TestNewList:
     def test_redirects_after_POST(self, client):
         response = client.post(
             '/lists/new',
-            data={'item_text': 'A new list item'}
+            data={'text': 'A new list item'}
         )
         new_list = List.objects.first()
         assert response.url == '/lists/{}/'.format(new_list.id)
@@ -43,7 +39,7 @@ class TestNewList:
     def test_validation_errors_are_sent_back_to_home_page_template(self, client):
         response = client.post(
             '/lists/new',
-            data={'item_text': ''}
+            data={'text': ''}
         )
         assert response.status_code == 200
         templates_used = [template.name for template in response.templates]
@@ -52,7 +48,7 @@ class TestNewList:
         assert expected_error.encode('utf-8') in response.content
 
     def test_invalid_list_items_are_not_saved(self, client):
-        client.post('/lists/new', data={'item_text': ''})
+        client.post('/lists/new', data={'text': ''})
         assert List.objects.count() == 0
         assert Item.objects.count() == 0
 
@@ -93,7 +89,7 @@ class TestListView:
 
         client.post(
             '/lists/{}/'.format(correct_list.id),
-            data={'item_text': 'New Item for Existing List'}
+            data={'text': 'New Item for Existing List'}
         )
 
         assert Item.objects.count() == 1
@@ -107,7 +103,7 @@ class TestListView:
 
         response = client.post(
             '/lists/{}/'.format(correct_list.id),
-            data={'item_text': 'New Item for Existing List'}
+            data={'text': 'New Item for Existing List'}
         )
 
         assert response.url == '/lists/{}/'.format(correct_list.id)
@@ -116,7 +112,7 @@ class TestListView:
         list_ = List.objects.create()
         response = client.post(
             '/lists/{}/'.format(list_.id),
-            data={'item_text': ''}
+            data={'text': ''}
         )
         assert response.status_code == 200
         templates_used = [template.name for template in response.templates]
