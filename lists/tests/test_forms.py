@@ -1,18 +1,13 @@
-from django.test import TestCase
 from lists.forms import EMPTY_ITEM_ERROR, ItemForm
 
 
-class ItemFormTest(TestCase):
+def test_form_has_placeholder_and_css_classes():
+    form = ItemForm()
+    assert 'placeholder="Enter a to-do item"' in form.as_p()
+    assert 'class="form-control input-lg' in form.as_p()
 
-    def test_form_has_placeholder_and_css_classes(self):
-        form = ItemForm()
-        self.assertIn('placeholder="Enter a to-do item"', form.as_p())
-        self.assertIn('class="form-control input-lg', form.as_p())
 
-    def test_form_validation_for_blank_items(self):
-        form = ItemForm(data={'text': ''})
-        self.assertFalse(form.is_valid())
-        self.assertEqual(
-            form.errors['text'],
-            [EMPTY_ITEM_ERROR]
-        )
+def test_form_validation_for_blank_items():
+    form = ItemForm(data={'text': ''})
+    assert not form.is_valid()
+    assert form.errors['text'] == [EMPTY_ITEM_ERROR]
