@@ -2,7 +2,7 @@ from django.utils.html import escape
 import pytest
 
 from lists.models import Item, List
-from lists.forms import ItemForm
+from lists.forms import ItemForm, EMPTY_ITEM_ERROR
 
 
 class TestHomePage:
@@ -36,16 +36,18 @@ class TestNewList:
         new_list = List.objects.first()
         assert response.url == '/lists/{}/'.format(new_list.id)
 
-    def test_validation_errors_are_sent_back_to_home_page_template(self, client):
-        response = client.post(
-            '/lists/new',
-            data={'text': ''}
-        )
+    def test_post_empty_input_renders_home_template(self, client):
+        response = client.post('/lists/new', data={'text': ''})
         assert response.status_code == 200
-        templates_used = [template.name for template in response.templates]
-        assert 'home.html' in templates_used
-        expected_error = escape("You can't have an empty list item")
-        assert expected_error.encode('utf-8') in response.content
+        assert 'home.html' in response.templates[0].name
+
+    def test_validation_errors_are_shown_on_home_page(self, client):
+        response = client.post('/lists/new', data={'text': ''})
+        assert escape(EMPTY_ITEM_ERROR) in response.content.decode('utf-8')
+
+    def test_post_empty_input_passes_form_to_template(self, client):
+        response = client.post('/lists/new', data={'text': ''})
+        assert isinstance(response.context['form'], ItemForm)
 
     def test_invalid_list_items_are_not_saved(self, client):
         client.post('/lists/new', data={'text': ''})
@@ -108,15 +110,28 @@ class TestListView:
 
         assert response.url == '/lists/{}/'.format(correct_list.id)
 
-    def test_validation_errors_end_up_on_lists_page(self, client):
+    @pytest.fixture()
+    def post_empty_input(self, client):
         list_ = List.objects.create()
-        response = client.post(
-            '/lists/{}/'.format(list_.id),
-            data={'text': ''}
-        )
-        assert response.status_code == 200
-        templates_used = [template.name for template in response.templates]
-        assert 'list.html' in templates_used
-        expected_error = escape("You can't have an empty list item")
-        assert expected_error.encode('utf-8') in response.content
+        return client.post('/lists/{}/'.format(list_.id), data={'text': ''})
+
+    def test_post_empty_input_not_saved_to_db(self, post_empty_input):
+        response = post_empty_input
+        assert Item.objects.count() == 0
+
+    def test_post_empty_input_renders_list_template(self, post_empty_input):
+        assert post_empty_input.status_code == 200
+        assert 'list.html' in post_empty_input.templates[0].name
+
+    def test_post_empty_input_passes_form_to_template(self, post_empty_input):
+        assert isinstance(post_empty_input.context['form'], ItemForm)
+
+    def test_post_empty_input_shows_error_on_page(self, post_empty_input):
+        assert escape(EMPTY_ITEM_ERROR) in post_empty_input.content.decode('utf-8')
+
+    def test_displays_item_form(self, client):
+        list_ = List.objects.create()
+        response = client.get('/lists/{}/'.format(list_.id))
+        assert isinstance(response.context['form'], ItemForm)
+        assert b'name="text"' in response.content
 
