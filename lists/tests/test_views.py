@@ -129,6 +129,16 @@ class TestListView:
     def test_post_empty_input_shows_error_on_page(self, post_empty_input):
         assert escape(EMPTY_ITEM_ERROR) in post_empty_input.content.decode('utf-8')
 
+    @pytest.mark.skip
+    def test_duplicate_item_validation_errors_show_on_page(self, client):
+        list_ = List.objects.create()
+        Item.objects.create(text='sametext', list=list_)
+        response = client.post('/lists/{}/'.format(list_.id), data={'text': 'sametext'})
+        expected_error = escape("You've already got this in your list")
+        assert expected_error in response.content.decode('utf-8')
+        assert 'list.html' in response.templates[0].name
+        assert Item.objects.all().count() == 1
+
     def test_displays_item_form(self, client):
         list_ = List.objects.create()
         response = client.get('/lists/{}/'.format(list_.id))
